@@ -17,14 +17,12 @@ public class ClusteringBolt extends BaseRichBolt {
     int m;
     double e;
 
-    @Override
     public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
         _collector = collector;
         m = ((Double)(conf.get("m"))).intValue();
-        e = (double)(conf.get("e"));
+        e = (Double)(conf.get("e"));
     }
 
-    @Override
     public void execute(Tuple tuple) {
         Values v = new Values();
         v.add(1);
@@ -33,7 +31,6 @@ public class ClusteringBolt extends BaseRichBolt {
         _collector.ack(tuple);
     }
 
-    @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields("time","clusters"));
     }
