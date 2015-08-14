@@ -33,7 +33,7 @@ public class MergingBolt extends BaseRichBolt{
 
     public void execute(Tuple tuple) {
 //            _collector.emit(tuple, new Values(tuple.getString(0) + "!!!"));
-        t = tuple.getLongByField("time");
+        t = tuple.getLongByField("time").longValue();
 //        System.out.println("received at merge: "+t);
         if(t!=tPrevious+s){
             return;

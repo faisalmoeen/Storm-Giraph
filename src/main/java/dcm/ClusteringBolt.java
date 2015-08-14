@@ -25,8 +25,9 @@ public class ClusteringBolt extends BaseRichBolt {
 
     public void execute(Tuple tuple) {
         Values v = new Values();
-        v.add(1);
+        v.add(1L);
         v.add(null);
+        System.out.println();
         _collector.emit(tuple, v);
         _collector.ack(tuple);
     }

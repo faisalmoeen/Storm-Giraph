@@ -31,6 +31,7 @@ public class SimpleShortestPathsComputation extends BasicComputation<
     /** Class logger */
     private static final Logger LOG =
             Logger.getLogger(SimpleShortestPathsComputation.class);
+    private int superStep=0;
 
     /**
      * Is this vertex the source id?
@@ -46,6 +47,7 @@ public class SimpleShortestPathsComputation extends BasicComputation<
     public void compute(
             Vertex<LongWritable, DoubleWritable, FloatWritable> vertex,
             Iterable<DoubleWritable> messages) throws IOException {
+        System.out.println("Superstep:"+superStep++);
         if (getSuperstep() == 0) {
             vertex.setValue(new DoubleWritable(Double.MAX_VALUE));
         }

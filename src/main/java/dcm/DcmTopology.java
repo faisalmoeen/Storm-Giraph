@@ -25,8 +25,7 @@ import backtype.storm.utils.Utils;
 
 public class DcmTopology {
 
-    public static String inputFilePath="/Users/faisalorakzai/ownCloud/" +
-            "PhD Work/working-folder/experiments/trucks_dataset/trucks273s.txt";
+    public static String inputFilePath="/tmp/tiny_graph.txt";
     public static double m = 3;
     public static long k = 180;
     public static double e = 0.0006;
