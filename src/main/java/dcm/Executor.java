@@ -7,12 +7,14 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import graph.model.Edge;
+
 import java.util.Map;
 
 /**
  * Created by faisal on 8/7/15.
  */
-public class ClusteringBolt extends BaseRichBolt {
+public class Executor extends BaseRichBolt {
     OutputCollector _collector;
     int m;
     double e;
@@ -24,6 +26,8 @@ public class ClusteringBolt extends BaseRichBolt {
     }
 
     public void execute(Tuple tuple) {
+        Edge edge = (Edge)tuple.getValueByField("edge");
+        System.out.println(edge.getSource()+","+edge.getTarget()+","+edge.getProperty());
         Values v = new Values();
         v.add(1L);
         v.add(null);

@@ -23,9 +23,9 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.utils.Utils;
 
-public class DcmTopology {
+public class PregelTopology {
 
-    public static String inputFilePath="/tmp/tiny_graph.txt";
+    public static String inputFilePath="/tmp/edges.txt";
     public static double m = 3;
     public static long k = 180;
     public static double e = 0.0006;
@@ -34,8 +34,8 @@ public class DcmTopology {
     public static void main(String[] args) throws Exception {
         TopologyBuilder builder = new TopologyBuilder();
 
-        builder.setSpout("source", new FileObjsSpout(), 1);
-        builder.setBolt("clustering", new ClusteringBolt(), 3).shuffleGrouping("source");
+        builder.setSpout("source", new EdgeSource(), 1);
+        builder.setBolt("clustering", new Executor(), 1).shuffleGrouping("source");
         builder.setBolt("merging", new MergingBolt(), 1).shuffleGrouping("clustering");
 
         Config conf = new Config();

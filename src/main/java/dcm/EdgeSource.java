@@ -29,6 +29,7 @@ import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
+import graph.model.Edge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +39,8 @@ import java.util.List;
 import java.util.Map;
 
 
-public class FileObjsSpout extends BaseRichSpout {
-    public static Logger LOG = LoggerFactory.getLogger(FileObjsSpout.class);
+public class EdgeSource extends BaseRichSpout {
+    public static Logger LOG = LoggerFactory.getLogger(EdgeSource.class);
     boolean _isDistributed;
     StreamFileReader streamFileReader;
     List<Double[]> points;
@@ -47,11 +48,11 @@ public class FileObjsSpout extends BaseRichSpout {
     long s=1; //sampling rate
     SpoutOutputCollector _collector;
 
-    public FileObjsSpout() {
+    public EdgeSource() {
         this(true);
     }
 
-    public FileObjsSpout(boolean isDistributed) {
+    public EdgeSource(boolean isDistributed) {
         _isDistributed = isDistributed;
     }
 
@@ -63,7 +64,7 @@ public class FileObjsSpout extends BaseRichSpout {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        System.out.println("Opened FileObjsSpout");
+        System.out.println("Opened EdgeSource");
     }
 
     public void close() {
@@ -71,13 +72,13 @@ public class FileObjsSpout extends BaseRichSpout {
     }
 
     public void nextTuple() {
-        points = streamFileReader.getNextPointsAsDoubleArray(t+=s);
-        if(points==null){
-                Utils.sleep(1000);
-                return;
+        Edge edge = streamFileReader.getNextEdge();
+        if(edge==null){
+            Utils.sleep(1000);
+            return;
         }
-        Values v = new Values(t);
-        v.add(points);
+        Values v = new Values();
+        v.add(edge);
         _collector.emit(v);
 //        System.out.println("t="+t);
     }
@@ -91,7 +92,7 @@ public class FileObjsSpout extends BaseRichSpout {
     }
 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("time","points"));
+        declarer.declare(new Fields("edge"));
     }
 
     @Override
