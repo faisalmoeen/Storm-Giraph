@@ -35,8 +35,12 @@ public class PregelTopology {
         TopologyBuilder builder = new TopologyBuilder();
 
         builder.setSpout("source", new EdgeSource(), 1);
-        builder.setBolt("clustering", new Executor(), 1).shuffleGrouping("source");
-        builder.setBolt("merging", new MergingBolt(), 1).shuffleGrouping("clustering");
+        builder.setBolt("executor", new ExecutorBolt(), 1)
+                .shuffleGrouping("source")
+                .shuffleGrouping("executor")
+                .shuffleGrouping("master");
+        builder.setBolt("master", new MasterBolt(), 1)
+                .shuffleGrouping("executor");
 
         Config conf = new Config();
 //        conf.setDebug(true);

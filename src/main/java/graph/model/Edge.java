@@ -6,9 +6,9 @@ package graph.model;
 public class Edge {
     private Long source;
     private Long target;
-    private Object property;
+    private Long property;
 
-    public Edge(long source, long target, Object property) {
+    public Edge(long source, long target, Long property) {
         this.source = source;
         this.target = target;
         this.property = property;
@@ -30,11 +30,11 @@ public class Edge {
         this.target = target;
     }
 
-    public Object getProperty() {
+    public Long getProperty() {
         return property;
     }
 
-    public void setProperty(Object property) {
+    public void setProperty(Long property) {
         this.property = property;
     }
 }
