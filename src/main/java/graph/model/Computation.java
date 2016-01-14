@@ -1,5 +1,6 @@
 package graph.model;
 
+import backtype.storm.tuple.Values;
 import bsp.BoltRequestProcessor;
 
 import java.util.Map;
@@ -16,7 +17,7 @@ public class Computation {
         this.boltRequestProcessor = boltRequestProcessor;
     }
 
-    public void compute(){
+    public void compute(Vertex v1, Object msg){
 
     }
 
