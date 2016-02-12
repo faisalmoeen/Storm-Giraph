@@ -1,8 +1,6 @@
-package storm.giraph;
+package storm.simulation;
 
 import backtype.storm.Config;
-import backtype.storm.LocalCluster;
-import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.utils.Utils;
 import org.apache.commons.io.FileUtils;
@@ -28,51 +26,37 @@ import java.io.IOException;
 /**
  * Created by faisal on 1/4/16.
  */
-public class GiraphTopology {
+public class GiraphSimulationTopology {
     public static Long numWorkers=3L;
+    public static Long numSources=1L;
     public static Configuration configuration=null;
     public static String jobID;
-    public static Long numSources=1L;
+
     public static void main(String[] args) throws Exception {
         //Giraph job setup
-
+        jobID = System.currentTimeMillis()+"-0001";
 //        //Storm topology setup
         TopologyBuilderFactory factory = new TopologyBuilderFactory();
-        TopologyBuilder builder = factory.createBuilder(1, numWorkers);
+        TopologyBuilder builder = factory.createBuilder(numSources.intValue(), numWorkers);
         Config conf = new Config();
         conf.setDebug(true);
-        conf.setNumWorkers(numWorkers.intValue());
         conf.put("inputPath","/home/faisal/git/Storm-Giraph/src/main/resources/edges.txt");
         conf.put("mapred.map.tasks",numWorkers);
-//        conf.put("storm.zookeeper.servers","localhost");
-//        conf.put("storm.zookeeper.port","2181");
-//        conf.put("storm.zookeeper.root", "/storm");
-        conf.put("storm.zookeeper.session.timeout", 800000);
-        conf.put("storm.zookeeper.connection.timeout", 600000);
-//        conf.setMaxTaskParallelism(5);
-        runGiraphJob(false, numSources, numWorkers);
-//        conf.put("giraph.pure.yarn.job",true);
+        runGiraphJob(false, numSources,numWorkers);
 
-        if (args != null && args.length > 0) {
-            conf.setNumWorkers(3);
+        WorkerEmulator emulator1 = new WorkerEmulator();
+        emulator1.prepare(conf,1);
+        WorkerEmulator emulator2 = new WorkerEmulator();
+        emulator2.prepare(conf,2);
+        WorkerEmulator emulator3 = new WorkerEmulator();
+        emulator3.prepare(conf,3);
 
-            StormSubmitter.submitTopologyWithProgressBar(args[0], conf, builder.createTopology());
-        }
-        else {
-
-            LocalCluster cluster = new LocalCluster();
-            cluster.submitTopology("test", conf, builder.createTopology());
-//            StormSubmitter.submitTopology("test", conf, builder.createTopology());
-            Utils.sleep(99999999999L);
-            cluster.killTopology("test");
-            cluster.shutdown();
-        }
+        Utils.sleep(99999999999L);
     }
 
-    public static Configuration runGiraphJob(boolean run, Long numSources, Long numWorkers) throws Exception{
+    public static Configuration runGiraphJob(boolean run,Long numSources, Long numWorkers) throws Exception{
         String inputPath = "/home/faisal/git/GiraphDemoRunner/_bsp/tiny_graph.txt";
         String outputPath = "/tmp/graph_out";
-        jobID = System.currentTimeMillis()+"-0001";
         try {
             FileUtils.deleteDirectory(new File("/tmp/graph_out"));
         }catch (IOException e){
@@ -94,7 +78,7 @@ public class GiraphTopology {
         giraphConf.setMaxNumberOfSupersteps(100);
         giraphConf.SPLIT_MASTER_WORKER.set(giraphConf, false);
         giraphConf.USE_OUT_OF_CORE_GRAPH.set(giraphConf, true);
-        giraphConf.set("mapred.job.id","job-"+jobID);
+        giraphConf.set("mapred.job.id","job-"+System.currentTimeMillis()+"-0001");
         giraphConf.set("mapred.map.tasks",numWorkers.toString());
         giraphConf.set("giraph.maxWorkers",numWorkers.toString());
         giraphConf.set("giraph.maxSources",numSources.toString());
@@ -129,7 +113,7 @@ public class GiraphTopology {
     public static Configuration getConfiguration(){
         if(configuration==null)
             try {
-                configuration = runGiraphJob(false, numSources, numWorkers);
+                configuration = runGiraphJob(false,numSources,numWorkers);
             } catch (Exception e) {
                 e.printStackTrace();
             }

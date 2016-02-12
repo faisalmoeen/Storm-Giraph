@@ -14,7 +14,7 @@ import java.util.Map;
 public class ContextConstructor{
 
     public static Configuration getHadoopCofiguration(Map conf) throws Exception{
-        return GiraphTopology.runGiraphJob(false,(Long)conf.get("mapred.map.tasks"));
+        return GiraphTopology.getConfiguration();
     }
 
     public static MapContext getMapContext(Map conf, TaskAttemptID taskid) throws Exception {

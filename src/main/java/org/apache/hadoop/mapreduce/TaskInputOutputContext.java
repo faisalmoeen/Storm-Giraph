@@ -23,6 +23,7 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.TaskReporter;
 import org.apache.hadoop.util.Progressable;
+import org.apache.log4j.Logger;
 
 /**
  * A context object that allows input and output from the task. It is only
@@ -38,6 +39,7 @@ public abstract class TaskInputOutputContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT>
     private StatusReporter reporter = new TaskReporter();
     private OutputCommitter committer;
 
+    private static final Logger LOG = Logger.getLogger(TaskInputOutputContext.class);
     public TaskInputOutputContext(Configuration conf, TaskAttemptID taskid,
                                   RecordWriter<KEYOUT,VALUEOUT> output,
                                   OutputCommitter committer,
@@ -104,6 +106,7 @@ public abstract class TaskInputOutputContext<KEYIN,VALUEIN,KEYOUT,VALUEOUT>
     @Override
     public void setStatus(String status) {
 //        reporter.setStatus(status);
+        LOG.info(status);
     }
 
     public OutputCommitter getOutputCommitter() {

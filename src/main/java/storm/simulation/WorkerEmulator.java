@@ -1,49 +1,45 @@
-package storm.giraph;
+package storm.simulation;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
-import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
-import org.apache.giraph.conf.GiraphConfiguration;
 import org.apache.giraph.graph.GraphTaskManager;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.mapreduce.MapContext;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.log4j.Logger;
+import storm.giraph.ContextConstructor;
+import storm.giraph.GraphTaskManagerCallable;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Created by faisal on 1/4/16.
  */
-public class WorkerBolt<I extends WritableComparable, V extends Writable,
-        E extends Writable> extends BaseRichBolt {
+public class WorkerEmulator<I extends WritableComparable, V extends Writable,
+        E extends Writable> {
     OutputCollector _collector;
     TopologyContext _context;
     Map _conf;
     Mapper.Context mapContext = null;
     Integer taskId;
     /** Class logger */
-    private static final Logger LOG = Logger.getLogger(WorkerBolt.class);
+    private static final Logger LOG = Logger.getLogger(WorkerEmulator.class);
     /** Manage the framework-agnostic Giraph tasks for this job run */
     private GraphTaskManager<I, V, E> graphTaskManager;
 //    MapContext<Object, Object, Object, Object> mapContext = null;
 
-    public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
-        _collector = collector;
-        _context = context;
+    public void prepare(Map conf, int taskId) {
         _conf = conf;
 
-        taskId = _context.getThisTaskIndex();
+        this.taskId = taskId;
         int attempt = 0;
         int jobId = 1;
         TaskAttemptID taskAttemptID = new TaskAttemptID("jobtracker",jobId,true,taskId,attempt);
@@ -53,7 +49,8 @@ public class WorkerBolt<I extends WritableComparable, V extends Writable,
             e.printStackTrace();
         }
         assert mapContext != null;
-        mapContext.getConfiguration().set("mapred.task.partition", taskId.toString());
+//        mapContext.getConfiguration().set("mapred.job.id","job-"+System.currentTimeMillis()+"-0001");
+        mapContext.getConfiguration().set("mapred.task.partition", this.taskId.toString());
         graphTaskManager = new GraphTaskManager<I, V, E>(mapContext);
 
         // Setting the default handler for uncaught exceptions.
@@ -69,14 +66,12 @@ public class WorkerBolt<I extends WritableComparable, V extends Writable,
             e.printStackTrace();
         }
 
-        LOG.info("*****************taskIndex="+taskId+"threadID:"+Thread.currentThread().getId()+"********************");
+        LOG.info("*****************taskIndex="+taskId+"********************");
         runGtmThread();
 
     }
 
-    @Override
     public void cleanup() {
-        super.cleanup();
 
     }
 
@@ -111,9 +106,6 @@ public class WorkerBolt<I extends WritableComparable, V extends Writable,
     }
 
     public void runGtmThread(){
-//        GraphTaskManagerCallable gtmc = new GraphTaskManagerCallable(graphTaskManager);
-//        ExecutorService executor = Executors.newSingleThreadExecutor();
-//        Future<Integer> result = executor.submit(gtmc);
         GraphTaskManagerCallable gtmc = new GraphTaskManagerCallable(graphTaskManager);
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
         Future<Integer> result = executor.submit(gtmc);

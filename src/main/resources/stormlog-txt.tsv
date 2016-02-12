@@ -1,0 +1,189 @@
+Column 3	Column 4
+DEBUG 	Groups:139 -  Creating new Groups object
+DEBUG 	Groups:59 - Group mapping impl=org.apache.hadoop.security.ShellBasedUnixGroupsMapping; cacheTimeout=300000
+DEBUG 	UserGroupInformation:147 - hadoop login
+DEBUG 	UserGroupInformation:96 - hadoop login commit
+DEBUG 	UserGroupInformation:126 - using local user:UnixPrincipal: faisal
+DEBUG 	UserGroupInformation:558 - UGI loginUser:faisal
+DEBUG 	FileSystem:1441 - Creating filesystem for file:///
+DEBUG 	SortedRanges:347 - currentIndex 0   0:0
+INFO  	GraphTaskManager:623 - setup: Set log level to info
+INFO  	GraphTaskManager:596 - setup: Starting up BspServiceMaster (master thread)...
+INFO  	BspService:342 - BspService: Path to create to halt is /_hadoopBsp/job-1453140158931-0001/_haltComputation
+INFO  	BspService:342 - BspService: Path to create to halt is /_hadoopBsp/job-1453140203447-0001/_haltComputation
+INFO  	BspService:342 - BspService: Path to create to halt is /_hadoopBsp/job-1453140203447-0001/_haltComputation
+INFO  	BspService:345 - BspService: Connecting to ZooKeeper with job job-1453140158931-0001, 1 on localhost:2181
+INFO  	BspService:345 - BspService: Connecting to ZooKeeper with job job-1453140203447-0001, 2 on localhost:2181
+INFO  	BspService:345 - BspService: Connecting to ZooKeeper with job job-1453140203447-0001, 1 on localhost:2181
+INFO  	BspService:345 - BspService: Connecting to ZooKeeper with job job-1453140203447-0001, 0 on localhost:2181
+INFO  	BspService:931 - process: Asynchronous connection complete.
+INFO  	BspService:931 - process: Asynchronous connection complete.
+INFO  	BspService:931 - process: Asynchronous connection complete.
+INFO  	GraphTaskManager:605 - setup: Starting up BspServiceWorker...
+INFO  	GraphTaskManager:605 - setup: Starting up BspServiceWorker...
+INFO  	GraphTaskManager:605 - setup: Starting up BspServiceWorker...
+INFO  	BspService:342 - BspService: Path to create to halt is /_hadoopBsp/job-1453140203447-0001/_haltComputation
+INFO  	BspService:931 - process: Asynchronous connection complete.
+INFO  	BspService:931 - process: Asynchronous connection complete.
+INFO  	BspService:931 - process: Asynchronous connection complete.
+INFO  	DiskBackedPartitionStore:187 - giraph.maxSticky parameter unset or improperly set resetting to automatically computed value.
+INFO  	DiskBackedPartitionStore:187 - giraph.maxSticky parameter unset or improperly set resetting to automatically computed value.
+INFO  	DiskBackedPartitionStore:187 - giraph.maxSticky parameter unset or improperly set resetting to automatically computed value.
+INFO  	DiskBackedPartitionStore:208 - DiskBackedPartitionStore with maxInMemoryPartitions=10, isStaticGraph=false
+INFO  	DiskBackedPartitionStore:208 - DiskBackedPartitionStore with maxInMemoryPartitions=10, isStaticGraph=false
+INFO  	DiskBackedPartitionStore:208 - DiskBackedPartitionStore with maxInMemoryPartitions=10, isStaticGraph=false
+INFO  	BspService:685 - getJobState: Job state already exists (/_hadoopBsp/job-1453140203447-0001/_masterJobState)
+INFO  	BspService:685 - getJobState: Job state already exists (/_hadoopBsp/job-1453140203447-0001/_masterJobState)
+INFO  	BspServiceMaster:888 - becomeMaster: First child is '/_hadoopBsp/job-1453140203447-0001/_masterElectionDir/127.0.0.1_00000000000' and my bid is '/_hadoopBsp/job-1453140203447-0001/_masterElectionDir/127.0.0.1_20000000002'
+INFO  	BspServiceMaster:888 - becomeMaster: First child is '/_hadoopBsp/job-1453140203447-0001/_masterElectionDir/127.0.0.1_00000000000' and my bid is '/_hadoopBsp/job-1453140203447-0001/_masterElectionDir/127.0.0.1_00000000000'
+INFO  	BspServiceMaster:920 - becomeMaster: Waiting to become the master...
+INFO  	BspServiceMaster:888 - becomeMaster: First child is '/_hadoopBsp/job-1453140203447-0001/_masterElectionDir/127.0.0.1_00000000000' and my bid is '/_hadoopBsp/job-1453140203447-0001/_masterElectionDir/127.0.0.1_10000000001'
+INFO  	BspServiceMaster:920 - becomeMaster: Waiting to become the master...
+INFO  	NettyServer:183 - NettyServer: Using execution group with 8 threads for requestFrameDecoder.
+INFO  	NettyServer:183 - NettyServer: Using execution group with 8 threads for requestFrameDecoder.
+INFO  	NettyServer:183 - NettyServer: Using execution group with 8 threads for requestFrameDecoder.
+INFO  	NettyServer:183 - NettyServer: Using execution group with 8 threads for requestFrameDecoder.
+INFO  	NettyServer:379 - start: Started server communication server: /127.0.0.1:30001 with up to 16 threads on bind attempt 0 with sendBufferSize = 32768 receiveBufferSize = 524288
+INFO  	NettyServer:379 - start: Started server communication server: /127.0.0.1:30002 with up to 16 threads on bind attempt 0 with sendBufferSize = 32768 receiveBufferSize = 524288
+WARN  	NettyServer:366 - start: Likely failed to bind on attempt 0 to port 30000
+INFO  	NettyServer:379 - start: Started server communication server: /127.0.0.1:30000 with up to 16 threads on bind attempt 0 with sendBufferSize = 32768 receiveBufferSize = 524288
+INFO  	NettyServer:379 - start: Started server communication server: /127.0.0.1:30010 with up to 16 threads on bind attempt 1 with sendBufferSize = 32768 receiveBufferSize = 524288
+INFO  	NettyClient:241 - NettyClient: Using execution handler with 8 threads after request-encoder.
+INFO  	NettyClient:241 - NettyClient: Using execution handler with 8 threads after request-encoder.
+INFO  	NettyClient:241 - NettyClient: Using execution handler with 8 threads after request-encoder.
+INFO  	NettyClient:241 - NettyClient: Using execution handler with 8 threads after request-encoder.
+INFO  	BspServiceMaster:915 - becomeMaster: I am now the master!
+INFO  	GraphTaskManager:609 - setup: Registering health of this worker...
+INFO  	GraphTaskManager:609 - setup: Registering health of this worker...
+INFO  	WorkerBolt:73 - *****************taskIndex=0threadID:96********************
+INFO  	GraphTaskManager:609 - setup: Registering health of this worker...
+INFO  	WorkerBolt:73 - *****************taskIndex=1threadID:126********************
+INFO  	WorkerBolt:73 - *****************taskIndex=2threadID:97********************
+INFO  	WorkerBolt:85 - *****************taskIndex=1********************
+INFO  	WorkerBolt:85 - *****************taskIndex=0********************
+INFO  	WorkerBolt:85 - *****************taskIndex=2********************
+INFO  	BspService:685 - getJobState: Job state already exists (/_hadoopBsp/job-1453140203447-0001/_masterJobState)
+INFO  	BspService:685 - getJobState: Job state already exists (/_hadoopBsp/job-1453140203447-0001/_masterJobState)
+INFO  	BspService:685 - getJobState: Job state already exists (/_hadoopBsp/job-1453140203447-0001/_masterJobState)
+INFO  	BspService:976 - process: applicationAttemptChanged signaled
+INFO  	BspService:748 - getApplicationAttempt: Node /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir already exists!
+INFO  	BspService:748 - getApplicationAttempt: Node /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir already exists!
+INFO  	BspService:748 - getApplicationAttempt: Node /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir already exists!
+INFO  	BspService:796 - getApplicationAttempt: Node /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir already exists!
+INFO  	BspService:796 - getApplicationAttempt: Node /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir already exists!
+INFO  	BspService:796 - getApplicationAttempt: Node /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir already exists!
+WARN  	BspService:997 - process: Unknown and unprocessed event (path=/_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir, type=NodeChildrenChanged, state=SyncConnected)
+WARN  	BspService:997 - process: Unknown and unprocessed event (path=/_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir, type=NodeChildrenChanged, state=SyncConnected)
+WARN  	BspService:997 - process: Unknown and unprocessed event (path=/_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir, type=NodeChildrenChanged, state=SyncConnected)
+WARN  	BspService:997 - process: Unknown and unprocessed event (path=/_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir, type=NodeChildrenChanged, state=SyncConnected)
+INFO  	BspServiceWorker:766 - registerHealth: Created my health node for attempt=0, superstep=-1 with /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir/-1/_workerHealthyDir/127.0.0.1_1 and workerInfo= Worker(hostname=127.0.0.1, MRtaskID=1, port=30001)
+INFO  	BspServiceWorker:766 - registerHealth: Created my health node for attempt=0, superstep=-1 with /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir/-1/_workerHealthyDir/127.0.0.1_2 and workerInfo= Worker(hostname=127.0.0.1, MRtaskID=2, port=30002)
+INFO  	BspServiceWorker:766 - registerHealth: Created my health node for attempt=0, superstep=-1 with /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir/-1/_workerHealthyDir/127.0.0.1_0 and workerInfo= Worker(hostname=127.0.0.1, MRtaskID=0, port=30000)
+INFO  	GiraphFileInputFormat:273 - Total input paths to process : 1
+WARN  	NativeCodeLoader:52 - Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+WARN  	LoadSnappy:46 - Snappy native library not loaded
+INFO  	BspServiceMaster:350 - generateVertexInputSplits: Got 1 input splits for 3 input threads
+WARN  	BspServiceMaster:655 - createVertexInputSplits: Number of inputSplits=1 < 3=total number of input threads, some threads will be not used
+INFO  	BspServiceMaster:666 - createVertexInputSplits: Starting to write input split data to zookeeper with 1 threads
+INFO  	BspServiceMaster:681 - createVertexInputSplits: Done writing input split data to zookeeper
+INFO  	NettyClient:319 - Using Netty without authentication.
+INFO  	NettyClient:319 - Using Netty without authentication.
+INFO  	NettyClient:319 - Using Netty without authentication.
+INFO  	NettyServer:284 - start: Using Netty without authentication.
+INFO  	NettyServer:284 - start: Using Netty without authentication.
+INFO  	NettyServer:284 - start: Using Netty without authentication.
+INFO  	NettyClient:477 - connectAllAddresses: Successfully added 3 connections, (3 total connected) 0 failed, 0 failures total.
+INFO  	PartitionUtils:199 - computePartitionCount: Creating 9, default would have been 9 partitions.
+INFO  	BspService:961 - process: partitionAssignmentsReadyChanged (partitions are assigned)
+INFO  	BspService:961 - process: partitionAssignmentsReadyChanged (partitions are assigned)
+INFO  	BspService:961 - process: partitionAssignmentsReadyChanged (partitions are assigned)
+INFO  	BspServiceWorker:842 - startSuperstep: Master(hostname=127.0.0.1, MRtaskID=0, port=30010)
+INFO  	BspServiceWorker:842 - startSuperstep: Master(hostname=127.0.0.1, MRtaskID=0, port=30010)
+INFO  	BspServiceWorker:843 - startSuperstep: Ready for computation on superstep -1 since worker selection and vertex range assignments are done in /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir/-1/_addressesAndPartitions
+INFO  	BspServiceWorker:843 - startSuperstep: Ready for computation on superstep -1 since worker selection and vertex range assignments are done in /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir/-1/_addressesAndPartitions
+INFO  	BspServiceWorker:842 - startSuperstep: Master(hostname=127.0.0.1, MRtaskID=0, port=30010)
+INFO  	BspServiceWorker:843 - startSuperstep: Ready for computation on superstep -1 since worker selection and vertex range assignments are done in /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir/-1/_addressesAndPartitions
+INFO  	NettyClient:319 - Using Netty without authentication.
+INFO  	NettyClient:319 - Using Netty without authentication.
+INFO  	NettyClient:319 - Using Netty without authentication.
+INFO  	NettyClient:319 - Using Netty without authentication.
+INFO  	NettyClient:319 - Using Netty without authentication.
+INFO  	NettyClient:319 - Using Netty without authentication.
+INFO  	NettyClient:319 - Using Netty without authentication.
+INFO  	NettyClient:319 - Using Netty without authentication.
+INFO  	NettyClient:319 - Using Netty without authentication.
+INFO  	NettyServer:284 - start: Using Netty without authentication.
+INFO  	NettyServer:284 - start: Using Netty without authentication.
+INFO  	NettyServer:284 - start: Using Netty without authentication.
+INFO  	NettyClient:477 - connectAllAddresses: Successfully added 3 connections, (3 total connected) 0 failed, 0 failures total.
+INFO  	NettyServer:284 - start: Using Netty without authentication.
+INFO  	NettyServer:284 - start: Using Netty without authentication.
+INFO  	NettyServer:284 - start: Using Netty without authentication.
+INFO  	NettyClient:477 - connectAllAddresses: Successfully added 3 connections, (3 total connected) 0 failed, 0 failures total.
+INFO  	NettyServer:284 - start: Using Netty without authentication.
+INFO  	NettyServer:284 - start: Using Netty without authentication.
+INFO  	NettyClient:477 - connectAllAddresses: Successfully added 3 connections, (3 total connected) 0 failed, 0 failures total.
+INFO  	NettyServer:284 - start: Using Netty without authentication.
+INFO  	BspServiceMaster:1374 - barrierOnWorkerList: 0 out of 3 workers finished on superstep -1 on path /_hadoopBsp/job-1453140203447-0001/_vertexInputSplitDoneDir
+INFO  	RequestDecoder:74 - decode: Server window metrics MBytes/sec received = 0, MBytesReceived = 0.0001, ave received req MBytes = 0.0001, secs waited = 1.45314022E9
+INFO  	RequestDecoder:74 - decode: Server window metrics MBytes/sec received = 0, MBytesReceived = 0.0001, ave received req MBytes = 0.0001, secs waited = 1.45314022E9
+INFO  	RequestDecoder:74 - decode: Server window metrics MBytes/sec received = 0, MBytesReceived = 0.0001, ave received req MBytes = 0.0001, secs waited = 1.45314022E9
+INFO  	BspServiceMaster:1383 - barrierOnWorkerList: Waiting on [127.0.0.1_0, 127.0.0.1_1, 127.0.0.1_2]
+INFO  	BspServiceWorker:311 - loadInputSplits: Using 1 thread(s), originally 1 threads(s) for 1 total splits.
+INFO  	BspServiceWorker:311 - loadInputSplits: Using 1 thread(s), originally 1 threads(s) for 1 total splits.
+INFO  	BspServiceWorker:311 - loadInputSplits: Using 1 thread(s), originally 1 threads(s) for 1 total splits.
+INFO  	InputSplitsHandler:125 - reserveInputSplit: Reserved input split path /_hadoopBsp/job-1453140203447-0001/_vertexInputSplitDir/0, overall roughly 0.0% input splits reserved
+INFO  	InputSplitsHandler:133 - reserveInputSplit: Couldn't reserve (already reserved) inputSplit at /_hadoopBsp/job-1453140203447-0001/_vertexInputSplitDir/0/_vertexInputSplitReserved
+INFO  	InputSplitsHandler:133 - reserveInputSplit: Couldn't reserve (already reserved) inputSplit at /_hadoopBsp/job-1453140203447-0001/_vertexInputSplitDir/0/_vertexInputSplitReserved
+INFO  	InputSplitsCallable:307 - getInputSplit: Reserved /_hadoopBsp/job-1453140203447-0001/_vertexInputSplitDir/0 from ZooKeeper and got input split 'file:/home/faisal/git/GiraphDemoRunner/_bsp/tiny_graph.txt:0+111'
+INFO  	InputSplitsCallable:235 - call: Loaded 0 input splits in 0.010182138 secs, (v=0, e=0) 0.0 vertices/sec, 0.0 edges/sec
+INFO  	InputSplitsCallable:235 - call: Loaded 0 input splits in 0.010182056 secs, (v=0, e=0) 0.0 vertices/sec, 0.0 edges/sec
+INFO  	NettyClient:724 - waitAllRequests: Finished all requests. MBytes/sec received = 0.0011, MBytesReceived = 0, ave received req MBytes = 0, secs waited = 0.021
+INFO  	BspServiceWorker:661 - setup: Finally loaded a total of (v=0, e=0)
+INFO  	NettyClient:724 - waitAllRequests: Finished all requests. MBytes/sec received = 0.0011, MBytesReceived = 0, ave received req MBytes = 0, secs waited = 0.022
+INFO  	BspServiceWorker:661 - setup: Finally loaded a total of (v=0, e=0)
+INFO  	InputSplitsCallable:269 - loadFromInputSplit: Finished loading /_hadoopBsp/job-1453140203447-0001/_vertexInputSplitDir/0 (v=5, e=12)
+INFO  	InputSplitsCallable:235 - call: Loaded 1 input splits in 0.024560396 secs, (v=5, e=12) 203.57979 vertices/sec, 488.5915 edges/sec
+INFO  	NettyClient:724 - waitAllRequests: Finished all requests. MBytes/sec received = 0.0041, MBytesReceived = 0, ave received req MBytes = 0, secs waited = 0.005
+INFO  	BspServiceWorker:661 - setup: Finally loaded a total of (v=5, e=12)
+INFO  	BspService:1118 - process: vertexInputSplitsAllDoneChanged (all vertices sent from input splits)
+INFO  	BspService:1118 - process: vertexInputSplitsAllDoneChanged (all vertices sent from input splits)
+INFO  	BspService:1118 - process: vertexInputSplitsAllDoneChanged (all vertices sent from input splits)
+INFO  	BspServiceMaster:1374 - barrierOnWorkerList: 0 out of 3 workers finished on superstep -1 on path /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir/-1/_workerFinishedDir
+INFO  	BspServiceMaster:1383 - barrierOnWorkerList: Waiting on [127.0.0.1_0, 127.0.0.1_1, 127.0.0.1_2]
+INFO  	BspServiceWorker:979 - finishSuperstep: Waiting on all requests, superstep -1 Memory (free/total/max) = 871.74M / 970.50M / 3499.00M
+INFO  	BspServiceWorker:979 - finishSuperstep: Waiting on all requests, superstep -1 Memory (free/total/max) = 871.74M / 970.50M / 3499.00M
+INFO  	BspServiceWorker:979 - finishSuperstep: Waiting on all requests, superstep -1 Memory (free/total/max) = 871.74M / 970.50M / 3499.00M
+INFO  	NettyClient:724 - waitAllRequests: Finished all requests. MBytes/sec received = 0.0004, MBytesReceived = 0, ave received req MBytes = 0, secs waited = 0.058
+INFO  	NettyClient:724 - waitAllRequests: Finished all requests. MBytes/sec received = 0.0011, MBytesReceived = 0, ave received req MBytes = 0, secs waited = 0.023
+INFO  	WorkerAggregatorHandler:173 - finishSuperstep: Start gathering aggregators, workers will send their aggregated values once they are done with superstep computation
+INFO  	WorkerAggregatorHandler:173 - finishSuperstep: Start gathering aggregators, workers will send their aggregated values once they are done with superstep computation
+INFO  	NettyClient:724 - waitAllRequests: Finished all requests. MBytes/sec received = 0.0004, MBytesReceived = 0, ave received req MBytes = 0, secs waited = 0.058
+INFO  	WorkerAggregatorHandler:173 - finishSuperstep: Start gathering aggregators, workers will send their aggregated values once they are done with superstep computation
+INFO  	RequestDecoder:74 - decode: Server window metrics MBytes/sec received = 0, MBytesReceived = 0.0001, ave received req MBytes = 0, secs waited = 1.45314022E9
+INFO  	NettyClient:724 - waitAllRequests: Finished all requests. MBytes/sec received = 0.0062, MBytesReceived = 0, ave received req MBytes = 0, secs waited = 0.002
+INFO  	NettyClient:724 - waitAllRequests: Finished all requests. MBytes/sec received = 0.0062, MBytesReceived = 0, ave received req MBytes = 0, secs waited = 0.002
+INFO  	BspServiceWorker:909 - finishSuperstep: Superstep -1, messages = 0 , message bytes = 0 , Memory (free/total/max) = 867.21M / 970.50M / 3499.00M
+INFO  	NettyClient:724 - waitAllRequests: Finished all requests. MBytes/sec received = 0.0041, MBytesReceived = 0, ave received req MBytes = 0, secs waited = 0.002
+INFO  	BspServiceWorker:909 - finishSuperstep: Superstep -1, messages = 0 , message bytes = 0 , Memory (free/total/max) = 867.21M / 970.50M / 3499.00M
+INFO  	BspServiceWorker:909 - finishSuperstep: Superstep -1, messages = 0 , message bytes = 0 , Memory (free/total/max) = 867.21M / 970.50M / 3499.00M
+INFO  	BspServiceWorker:70 - finishSuperstep: (waiting for rest of workers) ALL_EXCEPT_ZOOKEEPER - Attempt=0, Superstep=-1
+INFO  	BspServiceWorker:70 - finishSuperstep: (waiting for rest of workers) ALL_EXCEPT_ZOOKEEPER - Attempt=0, Superstep=-1
+INFO  	BspServiceWorker:70 - finishSuperstep: (waiting for rest of workers) ALL_EXCEPT_ZOOKEEPER - Attempt=0, Superstep=-1
+INFO  	BspServiceMaster:1027 - aggregateWorkerStats: Aggregation found (vtx=5,finVtx=0,edges=12,msgCount=0,msgBytesCount=0,haltComputation=false, checkpointStatus=NONE) on superstep = -1
+INFO  	BspService:969 - process: superstepFinished signaled
+INFO  	BspService:969 - process: superstepFinished signaled
+INFO  	BspService:969 - process: superstepFinished signaled
+INFO  	MasterThread:130 - masterThread: Coordination of superstep -1 took 0.137 seconds ended with state THIS_SUPERSTEP_DONE and is now on superstep 0
+INFO  	BspServiceWorker:939 - finishSuperstep: Completed superstep -1 with global stats (vtx=5,finVtx=0,edges=12,msgCount=0,msgBytesCount=0,haltComputation=false, checkpointStatus=NONE) and classes (computation=org.apache.giraph.examples.SimpleShortestPathsComputation,combiner=null,incoming=null,outgoing=null)
+INFO  	BspServiceWorker:939 - finishSuperstep: Completed superstep -1 with global stats (vtx=5,finVtx=0,edges=12,msgCount=0,msgBytesCount=0,haltComputation=false, checkpointStatus=NONE) and classes (computation=org.apache.giraph.examples.SimpleShortestPathsComputation,combiner=null,incoming=null,outgoing=null)
+ERROR 	GraphTaskManagerCallable:30 - Caught an unrecoverable exception null
+INFO  	GraphTaskManagerCallable:31 - Task partition id:0
+INFO  	BspServiceWorker:939 - finishSuperstep: Completed superstep -1 with global stats (vtx=5,finVtx=0,edges=12,msgCount=0,msgBytesCount=0,haltComputation=false, checkpointStatus=NONE) and classes (computation=org.apache.giraph.examples.SimpleShortestPathsComputation,combiner=null,incoming=null,outgoing=null)
+ERROR 	BspServiceWorker:777 - unregisterHealth: Got failure, unregistering health on /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir/-1/_workerHealthyDir/127.0.0.1_0 on superstep 0
+ERROR 	GraphTaskManagerCallable:30 - Caught an unrecoverable exception null
+INFO  	GraphTaskManagerCallable:31 - Task partition id:2
+ERROR 	BspServiceWorker:777 - unregisterHealth: Got failure, unregistering health on /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir/-1/_workerHealthyDir/127.0.0.1_2 on superstep 0
+INFO  	InMemoryMessageStoreFactory:173 - newStore: Created class org.apache.giraph.comm.messages.primitives.long_id.LongByteArrayMessageStore for vertex id class org.apache.hadoop.io.LongWritable and message value class org.apache.hadoop.io.DoubleWritable and no combiner
+INFO  	InMemoryMessageStoreFactory:173 - newStore: Created class org.apache.giraph.comm.messages.primitives.long_id.LongByteArrayMessageStore for vertex id class org.apache.hadoop.io.LongWritable and message value class org.apache.hadoop.io.DoubleWritable and no combiner
+INFO  	BspServiceWorker:766 - registerHealth: Created my health node for attempt=0, superstep=0 with /_hadoopBsp/job-1453140203447-0001/_applicationAttemptsDir/0/_superstepDir/0/_workerHealthyDir/127.0.0.1_1 and workerInfo= Worker(hostname=127.0.0.1, MRtaskID=1, port=30001)
