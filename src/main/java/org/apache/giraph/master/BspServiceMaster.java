@@ -188,6 +188,8 @@ public class BspServiceMaster<I extends WritableComparable,
     private MasterInfo masterInfo;
     /** List of workers in current superstep, sorted by task id */
     private List<WorkerInfo> chosenWorkerInfoList = Lists.newArrayList();
+    /** List of sources in current superstep, sorted by task id */
+    private List<WorkerInfo> chosenSourceInfoList = Lists.newArrayList();
     /** Limit locality information added to each InputSplit znode */
     private final int localityLimit = 5;
     /** Observers over master lifecycle. */
@@ -246,6 +248,8 @@ public class BspServiceMaster<I extends WritableComparable,
         GiraphMetrics.get().addSuperstepResetObserver(this);
         GiraphStats.init((Mapper.Context) context);
     }
+
+
 
     @Override
     public void newSuperstep(SuperstepMetricsRegistry superstepMetrics) {
@@ -638,7 +642,7 @@ public class BspServiceMaster<I extends WritableComparable,
             totalResponses = healthySourceInfoList.size() +
                     unhealthySourceInfoList.size();
             if ((totalResponses * 100.0f / maxSources) >=
-                    minPercentSourcesResponded) {
+                    minPercentSourcesResponded || minSources==0) {
                 failJob = false;
                 break;
             }
@@ -1014,6 +1018,41 @@ public class BspServiceMaster<I extends WritableComparable,
         }
     }
 
+    public boolean waitForSourcesToFinish(){
+        String sourceFinishedPath =
+                mutationSplitPaths.getDonePath(getApplicationAttempt(), getSuperstep());
+        chosenSourceInfoList = checkSources();
+        if (!barrierOnWorkerList(sourceFinishedPath,
+                chosenSourceInfoList,
+                mutationInputSplitsEvents.getDoneStateChanged(),
+                false)) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean startMutation(){
+        // Let the sources know they can start sending splits
+        String mutationStartPath = getMutationStartPath(getApplicationAttempt(),getSuperstep());
+        try {
+            getZkExt().createExt(mutationStartPath,
+                    null,
+                    Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT,
+                    false);
+        } catch (KeeperException.NodeExistsException e) {
+            LOG.info("startMutation" + ": Node " +
+                    mutationStartPath + " already exists.");
+        } catch (KeeperException e) {
+            throw new IllegalStateException("startMutation" + ": KeeperException", e);
+        } catch (InterruptedException e) {
+            throw new IllegalStateException("startMutation" + ": IllegalStateException", e);
+        }
+        return true;
+    }
+
+
+
     @Override
     public boolean becomeMaster() {
         // Create my bid to become the master, then try to become the worker
@@ -1029,10 +1068,10 @@ public class BspServiceMaster<I extends WritableComparable,
                             true);
         } catch (KeeperException e) {
             throw new IllegalStateException(
-                    "becomeMaster: KeeperException", e);
+                    "becomeMaster-"+getGraphTaskManager().getPartitionID()+": KeeperException", e);
         } catch (InterruptedException e) {
             throw new IllegalStateException(
-                    "becomeMaster: IllegalStateException", e);
+                    "becomeMaster-"+getGraphTaskManager().getPartitionID()+": IllegalStateException", e);
         }
         while (true) {
             JSONObject jobState = getJobState();
@@ -1041,21 +1080,21 @@ public class BspServiceMaster<I extends WritableComparable,
                         ApplicationState.valueOf(
                                 jobState.getString(JSONOBJ_STATE_KEY)) ==
                                 ApplicationState.FINISHED) {
-                    LOG.info("becomeMaster: Job is finished, " +
+                    LOG.info("becomeMaster-"+getGraphTaskManager().getPartitionID()+": Job is finished, " +
                             "give up trying to be the master!");
                     isMaster = false;
                     return isMaster;
                 }
             } catch (JSONException e) {
                 throw new IllegalStateException(
-                        "becomeMaster: Couldn't get state from " + jobState, e);
+                        "becomeMaster-"+getGraphTaskManager().getPartitionID()+": Couldn't get state from " + jobState, e);
             }
             try {
                 List<String> masterChildArr =
                         getZkExt().getChildrenExt(
                                 masterElectionPath, true, true, true);
                 if (LOG.isInfoEnabled()) {
-                    LOG.info("becomeMaster: First child is '" +
+                    LOG.info("becomeMaster-"+getGraphTaskManager().getPartitionID()+": First child is '" +
                             masterChildArr.get(0) + "' and my bid is '" +
                             myBid + "'");
                 }
@@ -1082,20 +1121,20 @@ public class BspServiceMaster<I extends WritableComparable,
                                     getGraphTaskManager().createUncaughtExceptionHandler());
 
                     if (LOG.isInfoEnabled()) {
-                        LOG.info("becomeMaster: I am now the master!");
+                        LOG.info("becomeMaster-"+getGraphTaskManager().getPartitionID()+": I am now the master!");
                     }
                     isMaster = true;
                     return isMaster;
                 }
-                LOG.info("becomeMaster: Waiting to become the master...");
+                LOG.info("becomeMaster-"+getGraphTaskManager().getPartitionID()+": Waiting to become the master...");
                 getMasterElectionChildrenChangedEvent().waitForever();
                 getMasterElectionChildrenChangedEvent().reset();
             } catch (KeeperException e) {
                 throw new IllegalStateException(
-                        "becomeMaster: KeeperException", e);
+                        "becomeMaster-"+getGraphTaskManager().getPartitionID()+": KeeperException", e);
             } catch (InterruptedException e) {
                 throw new IllegalStateException(
-                        "becomeMaster: IllegalStateException", e);
+                        "becomeMaster-"+getGraphTaskManager().getPartitionID()+": IllegalStateException", e);
             }
         }
     }
@@ -1484,6 +1523,9 @@ public class BspServiceMaster<I extends WritableComparable,
                                         List<WorkerInfo> workerInfoList,
                                         BspEvent event,
                                         boolean ignoreDeath) {
+        if (LOG.isInfoEnabled()){
+            LOG.info("Master hit barrier on event at path: "+finishedWorkerPath+" for "+workerInfoList);
+        }
         try {
             getZkExt().createOnceExt(finishedWorkerPath,
                     null,

@@ -1,5 +1,3 @@
-package giraph.example;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.giraph.conf.GiraphConfiguration;
 import org.apache.giraph.examples.SimpleShortestPathsComputation;
@@ -14,8 +12,9 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.File;
+import java.io.IOException;
 
-public class GiraphDemoRunner implements Tool {
+public class GiraphDemoRunner implements Tool{
 
 	private Configuration conf;
 	private String inputPath;
@@ -32,24 +31,31 @@ public class GiraphDemoRunner implements Tool {
 	}
 
 	public void setOutputPath(String outputPath) {
+		try {
+			FileUtils.deleteDirectory(new File(outputPath));
+		}catch (IOException e){
+			e.printStackTrace();
+		}
 		this.outputPath = outputPath;
 	}
 
 	private String outputPath;
 	
+	@Override
 	public Configuration getConf() {
 		return conf;
 	}
 
+	@Override
 	public void setConf(Configuration conf) {
 		this.conf = conf;
 	}
 
+	@Override
 	public int run(String[] arg0) throws Exception {
 		
 		setInputPath("/home/faisal/git/Storm-Giraph/src/main/resources/tiny_graph.txt");
 		setOutputPath("/tmp/graph_out");
-		FileUtils.deleteDirectory(new File("/tmp/graph_out"));
 		GiraphConfiguration giraphConf = new GiraphConfiguration(getConf());
 		
 		giraphConf.setComputationClass(SimpleShortestPathsComputation.class);
@@ -58,11 +64,10 @@ public class GiraphDemoRunner implements Tool {
 		GiraphFileInputFormat.addVertexInputPath(giraphConf, new Path(getInputPath()));
 		giraphConf.setVertexOutputFormatClass(IdWithValueTextOutputFormat.class);
 		giraphConf.setLocalTestMode(true);
-		giraphConf.setWorkerConfiguration(3, 3, 100);
+		giraphConf.setWorkerConfiguration(1, 1, 100);
 		giraphConf.setMaxNumberOfSupersteps(100);
 		giraphConf.SPLIT_MASTER_WORKER.set(giraphConf, false);
 		giraphConf.USE_OUT_OF_CORE_GRAPH.set(giraphConf, true);
-		giraphConf.set("giraph.logLevel","debug");
 		
 		GiraphJob giraphJob = new GiraphJob(giraphConf,"GiraphDemo");
 		FileOutputFormat.setOutputPath(giraphJob.getInternalJob(), new Path(getOutputPath()));

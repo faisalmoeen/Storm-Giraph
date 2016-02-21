@@ -80,6 +80,10 @@ public interface CentralizedServiceMaster<I extends WritableComparable,
      */
     List<WorkerInfo> checkSources();
 
+    boolean startMutation();
+
+    boolean waitForSourcesToFinish();
+
     /**
      * Create the {@link BspInputSplit} objects from the index range based on the
      * user-defined MappingInputFormat.  The {@link BspInputSplit} objects will

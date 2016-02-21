@@ -40,22 +40,25 @@ public class GiraphSimulationTopology {
         TopologyBuilder builder = factory.createBuilder(numSources.intValue(), numWorkers);
         Config conf = new Config();
         conf.setDebug(true);
-        conf.put("inputPath","/home/faisal/git/Storm-Giraph/src/main/resources/edges.txt");
+        conf.put("inputPath","/home/faisal/git/Storm-Giraph/src/main/resources/tiny_graph.txt");
         conf.put("mapred.map.tasks",numWorkers);
         runGiraphJob(false, numSources,numWorkers);
 
         WorkerEmulator emulator1 = new WorkerEmulator();
-        emulator1.prepare(conf,1);
+        emulator1.prepare(conf,0, JAALConstants.WORKER);
         WorkerEmulator emulator2 = new WorkerEmulator();
-        emulator2.prepare(conf,2);
+        emulator2.prepare(conf,1, JAALConstants.WORKER);
         WorkerEmulator emulator3 = new WorkerEmulator();
-        emulator3.prepare(conf,3);
+        emulator3.prepare(conf,2, JAALConstants.WORKER);
+
+        WorkerEmulator emulator4 = new WorkerEmulator();
+        emulator4.prepare(conf,3, JAALConstants.SOURCE);
 
         Utils.sleep(99999999999L);
     }
 
     public static Configuration runGiraphJob(boolean run,Long numSources, Long numWorkers) throws Exception{
-        String inputPath = "/home/faisal/git/GiraphDemoRunner/_bsp/tiny_graph.txt";
+        String inputPath = "/home/faisal/git/Storm-Giraph/src/main/resources/tiny_graph.txt";
         String outputPath = "/tmp/graph_out";
         try {
             FileUtils.deleteDirectory(new File("/tmp/graph_out"));
@@ -83,11 +86,11 @@ public class GiraphSimulationTopology {
         giraphConf.set("giraph.maxWorkers",numWorkers.toString());
         giraphConf.set("giraph.maxSources",numSources.toString());
         giraphConf.set("giraph.minSources",numSources.toString());
-//        giraphConf.set("zk.connectiontimeout.ms", "80000");
-//        giraphConf.set("giraph.logLevel","debug");
+        giraphConf.set("zk.connectiontimeout.ms", "80000");
+        giraphConf.set("giraph.logLevel","debug");
 //        giraphConf.set("giraph.pure.yarn.job","true");
 //        giraphConf.set("giraph.maxWorkers","0");
-        giraphConf.set("giraph.zkList","localhost:2181");
+//        giraphConf.set("giraph.zkList","localhost:2181");
 
         String jobName = "GiraphDemo";
         GiraphJob giraphJob = new GiraphJob(giraphConf,jobName);

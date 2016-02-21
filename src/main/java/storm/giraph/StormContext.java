@@ -41,7 +41,7 @@ public class StormContext extends org.apache.hadoop.mapreduce.MapContext {
     }
 
     public Configuration getConfiguration() {
-        String inputPath = "/home/faisal/git/GiraphDemoRunner/_bsp/tiny_graph.txt";
+        String inputPath = "/home/faisal/git/Storm-Giraph/src/main/resources/tiny_graph.txt";
         String outputPath = "/tmp/graph_out";
         GiraphConfiguration giraphConf = new GiraphConfiguration(new Configuration());
 

@@ -39,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 
 import net.iharder.Base64;
 
-import org.apache.commons.lang.SystemUtils;
 import org.apache.giraph.bsp.ApplicationState;
 import org.apache.giraph.bsp.BspService;
 import org.apache.giraph.bsp.CentralizedServiceWorker;
@@ -86,7 +85,14 @@ import org.apache.giraph.partition.PartitionOwner;
 import org.apache.giraph.partition.PartitionStats;
 import org.apache.giraph.partition.PartitionStore;
 import org.apache.giraph.partition.WorkerGraphPartitioner;
-import org.apache.giraph.utils.*;
+import org.apache.giraph.utils.CallableFactory;
+import org.apache.giraph.utils.CheckpointingUtils;
+import org.apache.giraph.utils.JMapHistoDumper;
+import org.apache.giraph.utils.LoggerUtils;
+import org.apache.giraph.utils.MemoryUtils;
+import org.apache.giraph.utils.ProgressableUtils;
+import org.apache.giraph.utils.ReactiveJMapHistoDumper;
+import org.apache.giraph.utils.WritableUtils;
 import org.apache.giraph.zk.BspEvent;
 import org.apache.giraph.zk.PredicateLock;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -121,15 +127,15 @@ import com.google.common.collect.Lists;
  * @param <E> Edge data
  */
 @SuppressWarnings("rawtypes")
-public class BspServiceSource<I extends WritableComparable,
+public class BspServiceWorker<I extends WritableComparable,
         V extends Writable, E extends Writable>
-        extends BspServiceWorker<I, V, E>
+        extends BspService<I, V, E>
         implements CentralizedServiceWorker<I, V, E>,
         ResetSuperstepMetricsObserver {
     /** Name of gauge for time spent waiting on other workers */
     public static final String TIMER_WAIT_REQUESTS = "wait-requests-us";
     /** Class logger */
-    private static final Logger LOG = Logger.getLogger(BspServiceSource.class);
+    private static final Logger LOG = Logger.getLogger(BspServiceWorker.class);
     /** My process health znode */
     private String myHealthZnode;
     /** Worker info */
@@ -182,7 +188,7 @@ public class BspServiceSource<I extends WritableComparable,
      * @throws IOException
      * @throws InterruptedException
      */
-    public BspServiceSource(
+    public BspServiceWorker(
             Mapper<?, ?, ?, ?>.Context context,
             GraphTaskManager<I, V, E> graphTaskManager)
             throws IOException, InterruptedException {
@@ -476,47 +482,6 @@ public class BspServiceSource<I extends WritableComparable,
         }
     }
 
-    private void markCurrentSourceDoneThenWaitForOthers() {
-        String finishedSourcePath = mutationSplitPaths.getDonePath(getApplicationAttempt(), getSuperstep()) + "/" + getHostnamePartitionId();
-        try {
-            getZkExt().createExt(finishedSourcePath,
-                    null,
-                    Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT,
-                    true);
-        } catch (KeeperException.NodeExistsException e) {
-            LOG.warn("finishSuperstep: finished source path " +
-                    finishedSourcePath + " already exists!");
-        } catch (KeeperException e) {
-            throw new IllegalStateException("Creating " + finishedSourcePath +
-                    " failed with KeeperException", e);
-        } catch (InterruptedException e) {
-            throw new IllegalStateException("Creating " + finishedSourcePath +
-                    " failed with InterruptedException", e);
-        }
-
-        while (true) {
-            Stat inputSplitsDoneStat;
-            try {
-                inputSplitsDoneStat =
-                        getZkExt().exists(mutationSplitPaths.getAllDonePath(getApplicationAttempt(),getSuperstep()),
-                                true);
-            } catch (KeeperException e) {
-                throw new IllegalStateException(
-                        "markCurrentWorkerDoneThenWaitForOthers: " +
-                                "KeeperException waiting on worker done splits", e);
-            } catch (InterruptedException e) {
-                throw new IllegalStateException(
-                        "markCurrentWorkerDoneThenWaitForOthers: " +
-                                "InterruptedException waiting on worker done splits", e);
-            }
-            if (inputSplitsDoneStat != null) {
-                break;
-            }
-            getMutationInputSplitsEvents().getAllDoneChanged().waitForever();
-            getMutationInputSplitsEvents().getAllDoneChanged().reset();
-        }
-    }
     /**
      * Mark current worker as done and then wait for all workers
      * to finish processing input splits.
@@ -606,151 +571,148 @@ public class BspServiceSource<I extends WritableComparable,
                                 jobState.toString(), e);
             }
         }
-//        registerHealth(getSuperstep());
-//        Collection<? extends PartitionOwner> masterSetPartitionOwners = null;
 
-        if(true==false) {
-            // Add the partitions that this worker owns
-            Collection<? extends PartitionOwner> masterSetPartitionOwners =
-                    startSuperstep();
-            workerGraphPartitioner.updatePartitionOwners(
-                    getWorkerInfo(), masterSetPartitionOwners);
+        // Add the partitions that this worker owns
+        Collection<? extends PartitionOwner> masterSetPartitionOwners =
+                startSuperstep();
+        workerGraphPartitioner.updatePartitionOwners(
+                getWorkerInfo(), masterSetPartitionOwners);
 
 
-            workerClient.setup(getConfiguration().authenticate());
 
 
-            // Initialize aggregator at worker side during setup.
-            // Do this just before vertex and edge loading.
-            globalCommHandler.prepareSuperstep(workerAggregatorRequestProcessor);
+        workerClient.setup(getConfiguration().authenticate());
 
-            VertexEdgeCount vertexEdgeCount;
-            long entriesLoaded;
 
-            if (getConfiguration().hasMappingInputFormat()) {
-                // Ensure the mapping InputSplits are ready for processing
-                ensureInputSplitsReady(mappingInputSplitsPaths, mappingInputSplitsEvents);
-                getContext().progress();
-                try {
-                    entriesLoaded = loadMapping();
-                    // successfully loaded mapping
-                    // now initialize graphPartitionerFactory with this data
-                    getGraphPartitionerFactory().initialize(localData);
-                } catch (InterruptedException e) {
-                    throw new IllegalStateException(
-                            "setup: loadMapping failed with InterruptedException", e);
-                } catch (KeeperException e) {
-                    throw new IllegalStateException(
-                            "setup: loadMapping failed with KeeperException", e);
-                }
-                getContext().progress();
-                if (LOG.isInfoEnabled()) {
-                    LOG.info("setup: Finally loaded a total of " +
-                            entriesLoaded + " entries from inputSplits");
-                }
+        // Initialize aggregator at worker side during setup.
+        // Do this just before vertex and edge loading.
+        globalCommHandler.prepareSuperstep(workerAggregatorRequestProcessor);
 
-                // Workers wait for each other to finish, coordinated by master
-                markCurrentWorkerDoneThenWaitForOthers(mappingInputSplitsPaths,
-                        mappingInputSplitsEvents);
-                // Print stats for data stored in localData once mapping is fully
-                // loaded on all the workers
-                localData.printStats();
+        VertexEdgeCount vertexEdgeCount;
+        long entriesLoaded;
+
+        if (getConfiguration().hasMappingInputFormat()) {
+            // Ensure the mapping InputSplits are ready for processing
+            ensureInputSplitsReady(mappingInputSplitsPaths, mappingInputSplitsEvents);
+            getContext().progress();
+            try {
+                entriesLoaded = loadMapping();
+                // successfully loaded mapping
+                // now initialize graphPartitionerFactory with this data
+                getGraphPartitionerFactory().initialize(localData);
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(
+                        "setup: loadMapping failed with InterruptedException", e);
+            } catch (KeeperException e) {
+                throw new IllegalStateException(
+                        "setup: loadMapping failed with KeeperException", e);
             }
-
-            if (getConfiguration().hasVertexInputFormat()) {
-                // Ensure the vertex InputSplits are ready for processing
-                ensureInputSplitsReady(vertexInputSplitsPaths, vertexInputSplitsEvents);
-                getContext().progress();
-                try {
-                    vertexEdgeCount = loadVertices();
-                } catch (InterruptedException e) {
-                    throw new IllegalStateException(
-                            "setup: loadVertices failed with InterruptedException", e);
-                } catch (KeeperException e) {
-                    throw new IllegalStateException(
-                            "setup: loadVertices failed with KeeperException", e);
-                }
-                getContext().progress();
-            } else {
-                vertexEdgeCount = new VertexEdgeCount();
-            }
-            WorkerProgress.get().finishLoadingVertices();
-
-            if (getConfiguration().hasEdgeInputFormat()) {
-                // Ensure the edge InputSplits are ready for processing
-                ensureInputSplitsReady(edgeInputSplitsPaths, edgeInputSplitsEvents);
-                getContext().progress();
-                try {
-                    vertexEdgeCount = vertexEdgeCount.incrVertexEdgeCount(0, loadEdges());
-                } catch (InterruptedException e) {
-                    throw new IllegalStateException(
-                            "setup: loadEdges failed with InterruptedException", e);
-                } catch (KeeperException e) {
-                    throw new IllegalStateException(
-                            "setup: loadEdges failed with KeeperException", e);
-                }
-                getContext().progress();
-            }
-            WorkerProgress.get().finishLoadingEdges();
-
+            getContext().progress();
             if (LOG.isInfoEnabled()) {
-                LOG.info("setup: Finally loaded a total of " + vertexEdgeCount);
+                LOG.info("setup: Finally loaded a total of " +
+                        entriesLoaded + " entries from inputSplits");
             }
 
-            if (getConfiguration().hasVertexInputFormat()) {
-                // Workers wait for each other to finish, coordinated by master
-                markCurrentWorkerDoneThenWaitForOthers(vertexInputSplitsPaths,
-                        vertexInputSplitsEvents);
-            }
-
-            if (getConfiguration().hasEdgeInputFormat()) {
-                // Workers wait for each other to finish, coordinated by master
-                markCurrentWorkerDoneThenWaitForOthers(edgeInputSplitsPaths,
-                        edgeInputSplitsEvents);
-            }
-
-            // Create remaining partitions owned by this worker.
-            for (PartitionOwner partitionOwner : masterSetPartitionOwners) {
-                if (partitionOwner.getWorkerInfo().equals(getWorkerInfo()) &&
-                        !getPartitionStore().hasPartition(
-                                partitionOwner.getPartitionId())) {
-                    Partition<I, V, E> partition =
-                            getConfiguration().createPartition(
-                                    partitionOwner.getPartitionId(), getContext());
-                    getPartitionStore().addPartition(partition);
-                }
-            }
-
-            // remove mapping store if possible
-            localData.removeMappingStoreIfPossible();
-
-            if (getConfiguration().hasEdgeInputFormat()) {
-                // Move edges from temporary storage to their source vertices.
-                getServerData().getEdgeStore().moveEdgesToVertices();
-            }
-
-            // Generate the partition stats for the input superstep and process
-            // if necessary
-            List<PartitionStats> partitionStatsList =
-                    new ArrayList<PartitionStats>();
-            for (Integer partitionId : getPartitionStore().getPartitionIds()) {
-                Partition<I, V, E> partition =
-                        getPartitionStore().getOrCreatePartition(partitionId);
-                PartitionStats partitionStats =
-                        new PartitionStats(partition.getId(),
-                                partition.getVertexCount(),
-                                0,
-                                partition.getEdgeCount(),
-                                0, 0);
-                partitionStatsList.add(partitionStats);
-                getPartitionStore().putPartition(partition);
-            }
-            workerGraphPartitioner.finalizePartitionStats(
-                    partitionStatsList, getPartitionStore());
-
-            return finishSuperstep(partitionStatsList, null);
+            // Workers wait for each other to finish, coordinated by master
+            markCurrentWorkerDoneThenWaitForOthers(mappingInputSplitsPaths,
+                    mappingInputSplitsEvents);
+            // Print stats for data stored in localData once mapping is fully
+            // loaded on all the workers
+            localData.printStats();
         }
-        return null;
+
+        if (getConfiguration().hasVertexInputFormat()) {
+            // Ensure the vertex InputSplits are ready for processing
+            ensureInputSplitsReady(vertexInputSplitsPaths, vertexInputSplitsEvents);
+            getContext().progress();
+            try {
+                vertexEdgeCount = loadVertices();
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(
+                        "setup: loadVertices failed with InterruptedException", e);
+            } catch (KeeperException e) {
+                throw new IllegalStateException(
+                        "setup: loadVertices failed with KeeperException", e);
+            }
+            getContext().progress();
+        } else {
+            vertexEdgeCount = new VertexEdgeCount();
+        }
+        WorkerProgress.get().finishLoadingVertices();
+
+        if (getConfiguration().hasEdgeInputFormat()) {
+            // Ensure the edge InputSplits are ready for processing
+            ensureInputSplitsReady(edgeInputSplitsPaths, edgeInputSplitsEvents);
+            getContext().progress();
+            try {
+                vertexEdgeCount = vertexEdgeCount.incrVertexEdgeCount(0, loadEdges());
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(
+                        "setup: loadEdges failed with InterruptedException", e);
+            } catch (KeeperException e) {
+                throw new IllegalStateException(
+                        "setup: loadEdges failed with KeeperException", e);
+            }
+            getContext().progress();
+        }
+        WorkerProgress.get().finishLoadingEdges();
+
+        if (LOG.isInfoEnabled()) {
+            LOG.info("setup: Finally loaded a total of " + vertexEdgeCount);
+        }
+
+        if (getConfiguration().hasVertexInputFormat()) {
+            // Workers wait for each other to finish, coordinated by master
+            markCurrentWorkerDoneThenWaitForOthers(vertexInputSplitsPaths,
+                    vertexInputSplitsEvents);
+        }
+
+        if (getConfiguration().hasEdgeInputFormat()) {
+            // Workers wait for each other to finish, coordinated by master
+            markCurrentWorkerDoneThenWaitForOthers(edgeInputSplitsPaths,
+                    edgeInputSplitsEvents);
+        }
+
+        // Create remaining partitions owned by this worker.
+        for (PartitionOwner partitionOwner : masterSetPartitionOwners) {
+            if (partitionOwner.getWorkerInfo().equals(getWorkerInfo()) &&
+                    !getPartitionStore().hasPartition(
+                            partitionOwner.getPartitionId())) {
+                Partition<I, V, E> partition =
+                        getConfiguration().createPartition(
+                                partitionOwner.getPartitionId(), getContext());
+                getPartitionStore().addPartition(partition);
+            }
+        }
+
+        // remove mapping store if possible
+        localData.removeMappingStoreIfPossible();
+
+        if (getConfiguration().hasEdgeInputFormat()) {
+            // Move edges from temporary storage to their source vertices.
+            getServerData().getEdgeStore().moveEdgesToVertices();
+        }
+
+        // Generate the partition stats for the input superstep and process
+        // if necessary
+        List<PartitionStats> partitionStatsList =
+                new ArrayList<PartitionStats>();
+        for (Integer partitionId : getPartitionStore().getPartitionIds()) {
+            Partition<I, V, E> partition =
+                    getPartitionStore().getOrCreatePartition(partitionId);
+            PartitionStats partitionStats =
+                    new PartitionStats(partition.getId(),
+                            partition.getVertexCount(),
+                            0,
+                            partition.getEdgeCount(),
+                            0, 0);
+            partitionStatsList.add(partitionStats);
+            getPartitionStore().putPartition(partition);
+        }
+        workerGraphPartitioner.finalizePartitionStats(
+                partitionStatsList, getPartitionStore());
+
+        return finishSuperstep(partitionStatsList, null);
     }
 
     /**
@@ -766,10 +728,10 @@ public class BspServiceSource<I extends WritableComparable,
 
         String myHealthPath = null;
         if (isHealthy()) {
-            myHealthPath = getSourceInfoHealthyPath(getApplicationAttempt(),
+            myHealthPath = getWorkerInfoHealthyPath(getApplicationAttempt(),
                     getSuperstep());
         } else {
-            myHealthPath = getSourceInfoUnhealthyPath(getApplicationAttempt(),
+            myHealthPath = getWorkerInfoUnhealthyPath(getApplicationAttempt(),
                     getSuperstep());
         }
         myHealthPath = myHealthPath + "/" + workerInfo.getHostnameId();
@@ -844,17 +806,7 @@ public class BspServiceSource<I extends WritableComparable,
             workerServer.prepareSuperstep();
         }
 
-        //*********************planning Mutation Phase******************************************************************
         registerHealth(getSuperstep());
-        waitForMutationStart();
-        try {
-            Thread.sleep(8000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        markCurrentSourceDoneThenWaitForOthers();
-        //**************************************************************************************************************
-
 
         String addressesAndPartitionsPath =
                 getAddressesAndPartitionsPath(getApplicationAttempt(),
@@ -1054,49 +1006,6 @@ public class BspServiceSource<I extends WritableComparable,
                             "signal completion of superstep " + getSuperstep(), e);
         }
     }
-
-    /**
-     * Wait for all the other Sources to finish the superstep.
-     *
-     *
-     */
-    private void waitForMutationStart() {
-        String mutationStartPath = getMutationStartPath(getApplicationAttempt(),getSuperstep());
-        try {
-            while (getZkExt().exists(mutationStartPath, true) == null) {
-                getMutationStartCreatedEvent().waitForever();
-                getMutationStartCreatedEvent().reset();
-            }
-        } catch (KeeperException e) {
-            throw new IllegalStateException(
-                    "finishMutationSplits: Failed while waiting for master to " +
-                            "signal completion of MutationSplits " + getSuperstep(), e);
-        } catch (InterruptedException e) {
-            throw new IllegalStateException(
-                    "finishMutationSplits: Failed while waiting for master to " +
-                            "signal completion of mutationSplits " + getSuperstep(), e);
-        }
-    }
-
-//    private void endMutationSplits() {
-//        // Let the sources know they can start sending splits
-//        String mutationSplitsDoneDirPath = getMutationSplitsDoneDirPath(getApplicationAttempt(),getSuperstep());
-//        try {
-//            getZkExt().createExt(mutationSplitsDoneDirPath,
-//                    null,
-//                    Ids.OPEN_ACL_UNSAFE,
-//                    CreateMode.PERSISTENT,
-//                    false);
-//        } catch (KeeperException.NodeExistsException e) {
-//            LOG.info("startMutation" + ": Node " +
-//                    mutationStartPath + " already exists.");
-//        } catch (KeeperException e) {
-//            throw new IllegalStateException("startMutation" + ": KeeperException", e);
-//        } catch (InterruptedException e) {
-//            throw new IllegalStateException("startMutation" + ": IllegalStateException", e);
-//        }
-//        return true;
-//    }
 
     /**
      * Write finished superstep info to ZooKeeper.
@@ -1860,79 +1769,79 @@ public class BspServiceSource<I extends WritableComparable,
         }
     }
 
-//    @Override
-//    public final void exchangeVertexPartitions(
-//            Collection<? extends PartitionOwner> masterSetPartitionOwners) {
-//        // 1. Fix the addresses of the partition ids if they have changed.
-//        // 2. Send all the partitions to their destination workers in a random
-//        //    fashion.
-//        // 3. Notify completion with a ZooKeeper stamp
-//        // 4. Wait for all my dependencies to be done (if any)
-//        // 5. Add the partitions to myself.
-//        PartitionExchange partitionExchange =
-//                workerGraphPartitioner.updatePartitionOwners(
-//                        getWorkerInfo(), masterSetPartitionOwners);
-//        workerClient.openConnections();
-//
-//        Map<WorkerInfo, List<Integer>> sendWorkerPartitionMap =
-//                partitionExchange.getSendWorkerPartitionMap();
-//        if (!getPartitionStore().isEmpty()) {
-//            sendWorkerPartitions(sendWorkerPartitionMap);
-//        }
-//
-//        Set<WorkerInfo> myDependencyWorkerSet =
-//                partitionExchange.getMyDependencyWorkerSet();
-//        Set<String> workerIdSet = new HashSet<String>();
-//        for (WorkerInfo tmpWorkerInfo : myDependencyWorkerSet) {
-//            if (!workerIdSet.add(tmpWorkerInfo.getHostnameId())) {
-//                throw new IllegalStateException(
-//                        "exchangeVertexPartitions: Duplicate entry " + tmpWorkerInfo);
-//            }
-//        }
-//        if (myDependencyWorkerSet.isEmpty() && getPartitionStore().isEmpty()) {
-//            if (LOG.isInfoEnabled()) {
-//                LOG.info("exchangeVertexPartitions: Nothing to exchange, " +
-//                        "exiting early");
-//            }
-//            return;
-//        }
-//
-//        String vertexExchangePath =
-//                getPartitionExchangePath(getApplicationAttempt(), getSuperstep());
-//        List<String> workerDoneList;
-//        try {
-//            while (true) {
-//                workerDoneList = getZkExt().getChildrenExt(
-//                        vertexExchangePath, true, false, false);
-//                workerIdSet.removeAll(workerDoneList);
-//                if (workerIdSet.isEmpty()) {
-//                    break;
-//                }
-//                if (LOG.isInfoEnabled()) {
-//                    LOG.info("exchangeVertexPartitions: Waiting for workers " +
-//                            workerIdSet);
-//                }
-//                getPartitionExchangeChildrenChangedEvent().waitForever();
-//                getPartitionExchangeChildrenChangedEvent().reset();
-//            }
-//        } catch (KeeperException | InterruptedException e) {
-//            throw new RuntimeException(
-//                    "exchangeVertexPartitions: Got runtime exception", e);
-//        }
-//
-//        if (LOG.isInfoEnabled()) {
-//            LOG.info("exchangeVertexPartitions: Done with exchange.");
-//        }
-//    }
+    @Override
+    public final void exchangeVertexPartitions(
+            Collection<? extends PartitionOwner> masterSetPartitionOwners) {
+        // 1. Fix the addresses of the partition ids if they have changed.
+        // 2. Send all the partitions to their destination workers in a random
+        //    fashion.
+        // 3. Notify completion with a ZooKeeper stamp
+        // 4. Wait for all my dependencies to be done (if any)
+        // 5. Add the partitions to myself.
+        PartitionExchange partitionExchange =
+                workerGraphPartitioner.updatePartitionOwners(
+                        getWorkerInfo(), masterSetPartitionOwners);
+        workerClient.openConnections();
+
+        Map<WorkerInfo, List<Integer>> sendWorkerPartitionMap =
+                partitionExchange.getSendWorkerPartitionMap();
+        if (!getPartitionStore().isEmpty()) {
+            sendWorkerPartitions(sendWorkerPartitionMap);
+        }
+
+        Set<WorkerInfo> myDependencyWorkerSet =
+                partitionExchange.getMyDependencyWorkerSet();
+        Set<String> workerIdSet = new HashSet<String>();
+        for (WorkerInfo tmpWorkerInfo : myDependencyWorkerSet) {
+            if (!workerIdSet.add(tmpWorkerInfo.getHostnameId())) {
+                throw new IllegalStateException(
+                        "exchangeVertexPartitions: Duplicate entry " + tmpWorkerInfo);
+            }
+        }
+        if (myDependencyWorkerSet.isEmpty() && getPartitionStore().isEmpty()) {
+            if (LOG.isInfoEnabled()) {
+                LOG.info("exchangeVertexPartitions: Nothing to exchange, " +
+                        "exiting early");
+            }
+            return;
+        }
+
+        String vertexExchangePath =
+                getPartitionExchangePath(getApplicationAttempt(), getSuperstep());
+        List<String> workerDoneList;
+        try {
+            while (true) {
+                workerDoneList = getZkExt().getChildrenExt(
+                        vertexExchangePath, true, false, false);
+                workerIdSet.removeAll(workerDoneList);
+                if (workerIdSet.isEmpty()) {
+                    break;
+                }
+                if (LOG.isInfoEnabled()) {
+                    LOG.info("exchangeVertexPartitions: Waiting for workers " +
+                            workerIdSet);
+                }
+                getPartitionExchangeChildrenChangedEvent().waitForever();
+                getPartitionExchangeChildrenChangedEvent().reset();
+            }
+        } catch (KeeperException | InterruptedException e) {
+            throw new RuntimeException(
+                    "exchangeVertexPartitions: Got runtime exception", e);
+        }
+
+        if (LOG.isInfoEnabled()) {
+            LOG.info("exchangeVertexPartitions: Done with exchange.");
+        }
+    }
 
     /**
      * Get event when the state of a partition exchange has changed.
      *
      * @return Event to check.
      */
-//    public final BspEvent getPartitionExchangeChildrenChangedEvent() {
-//        return partitionExchangeChildrenChanged;
-//    }
+    public final BspEvent getPartitionExchangeChildrenChangedEvent() {
+        return partitionExchangeChildrenChanged;
+    }
 
     @Override
     protected boolean processEvent(WatchedEvent event) {

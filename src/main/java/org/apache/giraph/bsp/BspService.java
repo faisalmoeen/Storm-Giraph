@@ -20,9 +20,7 @@ package org.apache.giraph.bsp;
 
 import org.apache.giraph.conf.GiraphConstants;
 import org.apache.giraph.conf.ImmutableClassesGiraphConfiguration;
-import org.apache.giraph.graph.GraphTaskManager;
-import org.apache.giraph.graph.InputSplitEvents;
-import org.apache.giraph.graph.InputSplitPaths;
+import org.apache.giraph.graph.*;
 import org.apache.giraph.job.JobProgressTracker;
 import org.apache.giraph.partition.GraphPartitionerFactory;
 import org.apache.giraph.utils.CheckpointingUtils;
@@ -113,6 +111,17 @@ public abstract class BspService<I extends WritableComparable,
     public static final String VERTEX_INPUT_SPLITS_ALL_DONE_NODE =
             "/_vertexInputSplitsAllDone";
 
+    /** Path to signal start of a mutation step */
+    public static final String MUTATION_START_NODE = "/_mutationStart";
+    /** Mutation input split directory about base dir */
+    public static final String MUTATION_INPUT_SPLIT_DIR = "/_mutationInputSplitDir";
+    /** Mutation input split done directory about base dir */
+    public static final String MUTATION_INPUT_SPLIT_DONE_DIR =
+            "/_mutationInputSplitDoneDir";
+    /** Denotes that all the mutation input splits are done. */
+    public static final String MUTATION_INPUT_SPLITS_ALL_DONE_NODE =
+            "/_mutationInputSplitsAllDone";
+
     /** Edge input split directory about base dir */
     public static final String EDGE_INPUT_SPLIT_DIR = "/_edgeInputSplitDir";
     /** Edge input split done directory about base dir */
@@ -130,6 +139,8 @@ public abstract class BspService<I extends WritableComparable,
     /** Denotes that all the edge input splits are done. */
     public static final String EDGE_INPUT_SPLITS_ALL_DONE_NODE =
             "/_edgeInputSplitsAllDone";
+
+
     /** Directory of attempts of this application */
     public static final String APPLICATION_ATTEMPTS_DIR =
             "/_applicationAttemptsDir";
@@ -158,6 +169,7 @@ public abstract class BspService<I extends WritableComparable,
     /** Where the master and worker addresses and partition assignments are set */
     public static final String ADDRESSES_AND_PARTITIONS_DIR =
             "/_addressesAndPartitions";
+
     /** Helps coordinate the partition exchnages */
     public static final String PARTITION_EXCHANGE_DIR =
             "/_partitionExchangeDir";
@@ -204,12 +216,16 @@ public abstract class BspService<I extends WritableComparable,
     protected final InputSplitPaths vertexInputSplitsPaths;
     /** ZooKeeper paths for edge input splits. */
     protected final InputSplitPaths edgeInputSplitsPaths;
+    /** ZooKeeper paths for mutation input splits. */
+    protected MutationSplitPaths mutationSplitPaths;
     /** Mapping input splits events */
     protected final InputSplitEvents mappingInputSplitsEvents;
     /** Vertex input split events. */
     protected final InputSplitEvents vertexInputSplitsEvents;
     /** Edge input split events. */
     protected final InputSplitEvents edgeInputSplitsEvents;
+    /** Edge input split events. */
+    protected final MutationSplitEvents mutationInputSplitsEvents;
     /** Path to the application attempts) */
     protected final String applicationAttemptsPath;
     /** Path to the cleaned up notifications */
@@ -232,6 +248,8 @@ public abstract class BspService<I extends WritableComparable,
     private final BspEvent sourceHealthRegistrationChanged;
     /** Are the addresses and partition assignments to workers ready? */
     private final BspEvent addressesAndPartitionsReadyChanged;
+    /** Did Master signal to start mutation phase? */
+    private final BspEvent mutationStartCreated;
     /** Application attempt changed */
     private final BspEvent applicationAttemptChanged;
     /** Superstep finished synchronization */
@@ -280,10 +298,12 @@ public abstract class BspService<I extends WritableComparable,
         this.mappingInputSplitsEvents = new InputSplitEvents(context);
         this.vertexInputSplitsEvents = new InputSplitEvents(context);
         this.edgeInputSplitsEvents = new InputSplitEvents(context);
+        this.mutationInputSplitsEvents = new MutationSplitEvents(context);
         this.connectedEvent = new PredicateLock(context);
         this.workerHealthRegistrationChanged = new PredicateLock(context);
         this.sourceHealthRegistrationChanged = new PredicateLock(context);
         this.addressesAndPartitionsReadyChanged = new PredicateLock(context);
+        this.mutationStartCreated = new PredicateLock(context);
         this.applicationAttemptChanged = new PredicateLock(context);
         this.superstepFinished = new PredicateLock(context);
         this.masterElectionChildrenChanged = new PredicateLock(context);
@@ -296,7 +316,10 @@ public abstract class BspService<I extends WritableComparable,
         registerBspEvent(vertexInputSplitsEvents.getStateChanged());
         registerBspEvent(edgeInputSplitsEvents.getAllReadyChanged());
         registerBspEvent(edgeInputSplitsEvents.getStateChanged());
+        registerBspEvent(mutationInputSplitsEvents.getStartMutationChanged());
+        registerBspEvent(mutationInputSplitsEvents.getStateChanged());
         registerBspEvent(addressesAndPartitionsReadyChanged);
+        registerBspEvent(mutationStartCreated);
         registerBspEvent(applicationAttemptChanged);
         registerBspEvent(superstepFinished);
         registerBspEvent(masterElectionChildrenChanged);
@@ -331,6 +354,7 @@ public abstract class BspService<I extends WritableComparable,
         edgeInputSplitsPaths = new InputSplitPaths(basePath,
                 EDGE_INPUT_SPLIT_DIR, EDGE_INPUT_SPLIT_DONE_DIR,
                 EDGE_INPUT_SPLITS_ALL_READY_NODE, EDGE_INPUT_SPLITS_ALL_DONE_NODE);
+        mutationSplitPaths = new MutationSplitPaths();
         applicationAttemptsPath = basePath + APPLICATION_ATTEMPTS_DIR;
         cleanedUpPath = basePath + CLEANED_UP_DIR;
 
@@ -461,6 +485,15 @@ public abstract class BspService<I extends WritableComparable,
     }
 
     /**
+     * Get the mutation split events.
+     *
+     * @return MutationSplitEvents.
+     */
+    public MutationSplitEvents getMutationInputSplitsEvents() {
+        return mutationInputSplitsEvents;
+    }
+
+    /**
      * Generate the worker information "healthy" directory path for a
      * superstep
      *
@@ -568,6 +601,20 @@ public abstract class BspService<I extends WritableComparable,
         return applicationAttemptsPath + "/" + attempt +
                 SUPERSTEP_DIR + "/" + superstep + ADDRESSES_AND_PARTITIONS_DIR;
     }
+
+    /**
+     * Generate the "mutation start" node for a superstep
+     *
+     * @param attempt application attempt number
+     * @param superstep superstep to use
+     * @return path based on the a superstep
+     */
+    public final String getMutationStartPath(long attempt,
+                                                      long superstep) {
+        return applicationAttemptsPath + "/" + attempt +
+                SUPERSTEP_DIR + "/" + superstep + MUTATION_START_NODE;
+    }
+
 
     /**
      * Generate the "partition exchange" directory path for a superstep
@@ -705,6 +752,9 @@ public abstract class BspService<I extends WritableComparable,
         return addressesAndPartitionsReadyChanged;
     }
 
+    public final BspEvent getMutationStartCreatedEvent() {
+        return mutationStartCreated;
+    }
 
     public final BspEvent getApplicationAttemptChangedEvent() {
         return applicationAttemptChanged;
@@ -1007,8 +1057,18 @@ public abstract class BspService<I extends WritableComparable,
             }
             workerHealthRegistrationChanged.signal();
             eventProcessed = true;
-        } else if (processMappingEvent(event) || processVertexEvent(event) ||
-                processEdgeEvent(event)) {
+        }else if ((event.getPath().contains(SOURCE_HEALTHY_DIR) ||
+                event.getPath().contains(SOURCE_UNHEALTHY_DIR)) &&
+                (event.getType() == EventType.NodeChildrenChanged)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("process: workerHealthRegistrationChanged " +
+                        "(worker health reported - healthy/unhealthy )");
+            }
+            sourceHealthRegistrationChanged.signal();
+            eventProcessed = true;
+        }
+        else if (processMappingEvent(event) || processVertexEvent(event) ||
+                processEdgeEvent(event) || processMutationEvent(event)){
             return;
         } else if (event.getPath().contains(ADDRESSES_AND_PARTITIONS_DIR) &&
                 event.getType() == EventType.NodeCreated) {
@@ -1018,7 +1078,7 @@ public abstract class BspService<I extends WritableComparable,
             }
             addressesAndPartitionsReadyChanged.signal();
             eventProcessed = true;
-        } else if (event.getPath().contains(SUPERSTEP_FINISHED_NODE) &&
+        }else if (event.getPath().contains(SUPERSTEP_FINISHED_NODE) &&
                 event.getType() == EventType.NodeCreated) {
             if (LOG.isInfoEnabled()) {
                 LOG.info("process: superstepFinished signaled");
@@ -1242,6 +1302,42 @@ public abstract class BspService<I extends WritableComparable,
     }
 
     /**
+     * Process WatchedEvent for Mutation Inputsplits
+     *
+     * @param event watched event
+     * @return true if event processed
+     */
+    public final boolean processMutationEvent(WatchedEvent event) {
+        boolean eventProcessed = false;
+        if (event.getPath().contains(MUTATION_START_NODE) &&
+                event.getType() == EventType.NodeCreated) {
+            if (LOG.isInfoEnabled()) {
+                LOG.info("process: mutationStartNode created ");
+            }
+            mutationStartCreated.signal();
+            eventProcessed = true;
+        }  else if (event.getPath().endsWith(MUTATION_INPUT_SPLIT_DONE_DIR) &&
+                (event.getType() == EventType.NodeChildrenChanged)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("process: mutationInputSplitsDoneStateChanged " +
+                        "(source finished sending)");
+            }
+            mutationInputSplitsEvents.getDoneStateChanged().signal();
+            eventProcessed = true;
+        }  else if (event.getPath().equals(
+                mutationSplitPaths.getAllDonePath(getApplicationAttempt(),getSuperstep())) &&
+                (event.getType() == EventType.NodeCreated)) {
+            if (LOG.isInfoEnabled()) {
+                LOG.info("process: mutationInputSplitsAllDoneChanged " +
+                        "(all sources sent the mutation input splits)");
+            }
+            mutationInputSplitsEvents.getAllDoneChanged().signal();
+            eventProcessed = true;
+        }
+        return eventProcessed;
+    }
+
+    /**
      * Get the last saved superstep.
      *
      * @return Last good superstep number
@@ -1255,6 +1351,48 @@ public abstract class BspService<I extends WritableComparable,
     @Override
     public JobProgressTracker getJobProgressTracker() {
         return getGraphTaskManager().getJobProgressTracker();
+    }
+
+
+    public class MutationSplitPaths {
+        /**
+         * Constructor.
+         *
+         *
+         */
+        private MutationSplitPaths() {
+
+        }
+
+        /**
+         * Get path to the input splits all ready.
+         *
+         * @return Path to input splits all ready
+         */
+        public String getMutationStartPath(Long attempt, Long superstep) {
+            return applicationAttemptsPath + "/" + attempt +
+                    SUPERSTEP_DIR + "/" + superstep + MUTATION_START_NODE;
+        }
+
+        /** Get path to the input splits done.
+         *
+         * @return Path to input splits done
+         */
+
+        public String getDonePath(Long attempt, Long superstep) {
+            return applicationAttemptsPath + "/" + attempt +
+                    SUPERSTEP_DIR + "/" + superstep + MUTATION_INPUT_SPLIT_DONE_DIR;
+        }
+
+        /**
+         * Get path to the input splits all done.
+         *
+         * @return Path to input splits all done
+         */
+        public String getAllDonePath(Long attempt, Long superstep) {
+            return applicationAttemptsPath + "/" + attempt +
+                    SUPERSTEP_DIR + "/" + superstep + MUTATION_INPUT_SPLITS_ALL_DONE_NODE;
+        }
     }
 
 

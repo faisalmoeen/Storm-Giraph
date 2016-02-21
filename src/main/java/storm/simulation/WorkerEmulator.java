@@ -36,7 +36,7 @@ public class WorkerEmulator<I extends WritableComparable, V extends Writable,
     private GraphTaskManager<I, V, E> graphTaskManager;
 //    MapContext<Object, Object, Object, Object> mapContext = null;
 
-    public void prepare(Map conf, int taskId) {
+    public void prepare(Map conf, int taskId, int taskType) {
         _conf = conf;
 
         this.taskId = taskId;
@@ -51,6 +51,15 @@ public class WorkerEmulator<I extends WritableComparable, V extends Writable,
         assert mapContext != null;
 //        mapContext.getConfiguration().set("mapred.job.id","job-"+System.currentTimeMillis()+"-0001");
         mapContext.getConfiguration().set("mapred.task.partition", this.taskId.toString());
+//        if((taskId != 0) && (mapContext.getConfiguration().get("storm.zookeeper.servers") == null)) {
+//            mapContext.getConfiguration().set("storm.zookeeper.servers", "localhost");
+//            mapContext.getConfiguration().set("storm.zookeeper.port", "22181");
+//        }
+        if((taskId != 0) && (mapContext.getConfiguration().get("giraph.zkList") == null)) {
+            mapContext.getConfiguration().set("giraph.zkList", "localhost:22181");
+//            mapContext.getConfiguration().set("storm.zookeeper.port", "22181");
+        }
+
         graphTaskManager = new GraphTaskManager<I, V, E>(mapContext);
 
         // Setting the default handler for uncaught exceptions.
@@ -59,7 +68,7 @@ public class WorkerEmulator<I extends WritableComparable, V extends Writable,
 
 
         try {
-            graphTaskManager.setup(null);
+            graphTaskManager.setup(null,taskType);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

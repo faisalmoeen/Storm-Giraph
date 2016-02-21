@@ -70,7 +70,7 @@ public class GiraphTopology {
     }
 
     public static Configuration runGiraphJob(boolean run, Long numSources, Long numWorkers) throws Exception{
-        String inputPath = "/home/faisal/git/GiraphDemoRunner/_bsp/tiny_graph.txt";
+        String inputPath = "/home/faisal/git/Storm-Giraph/src/main/resources/tiny_graph.txt";
         String outputPath = "/tmp/graph_out";
         jobID = System.currentTimeMillis()+"-0001";
         try {
@@ -99,11 +99,17 @@ public class GiraphTopology {
         giraphConf.set("giraph.maxWorkers",numWorkers.toString());
         giraphConf.set("giraph.maxSources",numSources.toString());
         giraphConf.set("giraph.minSources",numSources.toString());
+//        giraphConf.setBoolean("giraph.pure.yarn.job",true);
+
+//        giraphConf.set("storm.zookeeper.servers","localhost");
+//        giraphConf.set("storm.zookeeper.port","22181");
 //        giraphConf.set("zk.connectiontimeout.ms", "80000");
 //        giraphConf.set("giraph.logLevel","debug");
-//        giraphConf.set("giraph.pure.yarn.job","true");
+//
+//
+// giraphConf.set("giraph.pure.yarn.job","true");
 //        giraphConf.set("giraph.maxWorkers","0");
-        giraphConf.set("giraph.zkList","localhost:2181");
+//        giraphConf.set("giraph.zkList","localhost:2181");
 
         String jobName = "GiraphDemo";
         GiraphJob giraphJob = new GiraphJob(giraphConf,jobName);

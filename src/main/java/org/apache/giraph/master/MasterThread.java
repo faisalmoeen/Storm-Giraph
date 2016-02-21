@@ -29,6 +29,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.log4j.Logger;
+import storm.simulation.JAALConstants;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -64,6 +65,8 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
     private final Map<Long, Double> superstepSecsMap =
             new TreeMap<Long, Double>();
 
+    private int mode;
+
     /**
      * Constructor.
      *
@@ -74,6 +77,16 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
     public MasterThread(CentralizedServiceMaster<I, V, E> bspServiceMaster,
                         Context context) {
         super(MasterThread.class.getName());
+        this.bspServiceMaster = bspServiceMaster;
+        this.context = context;
+        GiraphTimers.init(context);
+        superstepCounterOn = USE_SUPERSTEP_COUNTERS.get(context.getConfiguration());
+    }
+
+    public MasterThread(CentralizedServiceMaster<I, V, E> bspServiceMaster,
+                        Context context, int mode) {
+        super(MasterThread.class.getName());
+        this.mode = mode;
         this.bspServiceMaster = bspServiceMaster;
         this.context = context;
         GiraphTimers.init(context);
@@ -103,7 +116,11 @@ public class MasterThread<I extends WritableComparable, V extends Writable,
                 // If these resources are still available at subsequent calls it just
                 // reads zookeeper for the list of healthy workers.
                 bspServiceMaster.checkWorkers();
-                bspServiceMaster.checkSources();
+                if(mode == JAALConstants.modes.RT) {
+                    bspServiceMaster.checkSources();
+                    bspServiceMaster.startMutation();
+                    bspServiceMaster.waitForSourcesToFinish();
+                }
                 initializeMillis = System.currentTimeMillis();
                 GiraphTimers.getInstance().getInitializeMs().increment(
                         initializeMillis - startMillis);
